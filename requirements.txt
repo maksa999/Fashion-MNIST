@@ -5,4 +5,4 @@ pillow
 numpy
 python-multipart
 tensorflow==2.21.0
-keras==3.12.4
+keras==3.13.2
