@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Распознавание одежды</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background-color: #f4f7f6;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .card {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+            text-align: center;
+            width: 100%;
+            max-width: 400px;
+        }
+        h2 {
+            margin-top: 0;
+            color: #333;
+        }
+
+        .file-upload-wrapper {
+            margin: 20px 0;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .custom-file-upload {
+            display: inline-block;
+            padding: 12px 24px;
+            background-color: #e0e0e0;
+            color: #333;
+            border: 2px dashed #bbb;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .custom-file-upload:hover {
+            background-color: #d0d0d0;
+            border-color: #999;
+        }
+
+        .file-name {
+            display: block;
+            margin-top: 10px;
+            font-size: 13px;
+            color: #666;
+            word-break: break-all;
+        }
+
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 14px 24px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            width: 100%;
+            transition: background 0.3s;
+            margin-top: 10px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        #result {
+            margin-top: 25px;
+            font-size: 18px;
+            font-weight: bold;
+            color: #4CAF50;
+            min-height: 24px;
+        }
+        #preview {
+            max-width: 100%;
+            max-height: 150px;
+            margin-top: 15px;
+            border-radius: 8px;
+            display: none;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-left: auto;
+            margin-right: auto;
+        }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h2>Классификатор одежды</h2>
+
+    <form id="uploadForm">
+        <div class="file-upload-wrapper">
+            <label for="fileInput" class="custom-file-upload">
+                Нажмите, чтобы выбрать файл
+            </label>
+            <input type="file" id="fileInput" accept="image/*" required>
+            <span id="fileName" class="file-name">Файл не выбран</span>
+        </div>
+
+        <button type="submit" id="btn">Распознать</button>
+    </form>
+
+    <img id="preview" src="" alt="Превью">
+    <div id="result"></div>
+</div>
+
+<script>
+    const form = document.getElementById('uploadForm');
+    const fileInput = document.getElementById('fileInput');
+    const fileName = document.getElementById('fileName');
+    const preview = document.getElementById('preview');
+    const resultDiv = document.getElementById('result');
+    const btn = document.getElementById('btn');
+
+    fileInput.onchange = () => {
+        const file = fileInput.files[0];
+        if (file) {
+            fileName.innerText = "Выбран: " + file.name;
+            preview.src = URL.createObjectURL(file);
+            preview.style.display = 'block';
+            resultDiv.innerText = '';
+        } else {
+            fileName.innerText = "Файл не выбран";
+            preview.style.display = 'none';
+        }
+    };
+
+    form.onsubmit = async (e) => {
+        e.preventDefault();
+        const file = fileInput.files[0];
+        if (!file) return;
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        btn.disabled = true;
+        btn.innerText = "Думаю...";
+        resultDiv.innerText = "";
+
+        try {
+            const response = await fetch('/predict', {
+                method: 'POST',
+                body: formData
+            });
+            const data = await response.json();
+
+            resultDiv.innerText = `Это: ${data.predicted_class} (${data.confidence})`;
+            resultDiv.style.color = "#4CAF50";
+        } catch (error) {
+            resultDiv.innerText = "Ошибка при распознавании!";
+            resultDiv.style.color = "red";
+        } finally {
+            btn.disabled = false;
+            btn.innerText = "Распознать";
+        }
+    };
+</script>
+
+</body>
+</html>
